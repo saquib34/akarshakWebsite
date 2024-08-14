@@ -58,7 +58,7 @@ const OrganizationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://df64-210-18-155-129.ngrok-free.app//submit-form', formData);
+      const response = await axios.post('https://real-melons-shake.loca.lt/submit-form', formData);
       console.log(response.data);
       toast.success('Form submitted successfully!');
     } catch (error) {
