@@ -74,7 +74,7 @@ const OrganizationForm = () => {
           <div className="max-w-md mx-auto">
             <div className="divide-y divide-gray-200">
               <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                <h2 className="text-3xl font-extrabold text-blue-600 mb-6">Organization Information</h2>
+                <h2 className="text-3xl font-extrabold text-blue-600 mb-6">Center Information</h2>
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
                     <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="organizationName">
