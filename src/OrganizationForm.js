@@ -58,7 +58,7 @@ const OrganizationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://young-jars-fall.loca.lt/submit-form', formData);
+      const response = await axios.post('https://proud-lamps-fix.loca.lt/submit-form', formData);
       console.log(response.data);
       toast.success('Form submitted successfully!');
     } catch (error) {
