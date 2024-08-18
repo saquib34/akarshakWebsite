@@ -1,10 +1,12 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
 import OrganizationForm from './OrganizationForm';
+// import testConnection from './test';
 
 function Home() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      {/* < testConnection /> */}
       <h1 className="text-4xl font-bold mb-4">Welcome</h1>
       <Link to="/form" className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
         Go to Organization Form

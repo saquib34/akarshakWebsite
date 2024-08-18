@@ -1,44 +1,94 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { motion } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Define the table name
+const TABLE_NAME = 'centres';
 
 const OrganizationForm = () => {
   const [formData, setFormData] = useState({
-    centreName: '',
-    centreLocation: '',
+    centre_name: '',
+    centre_location: '',
     latitude: '',
     longitude: '',
-    totalStrength: '',
-    totalArea: '',
-    educationalRooms: '',
-    furnitureCondition: '',
-    studyAreas: '',
-    digitalDevices: [],
-    internetReliability: '',
-    technicalSupport: '',
-    wheelchairAccess: '',
-    learningKits: '',
-    staffCount: '',
-    staffGenderDistribution: '',
-    maleStudents: '',
-    femaleStudents: '',
-    extracurricularActivities: ''
+    total_strength: '',
+    total_area: '',
+    educational_rooms: '',
+    furniture_condition: '',
+    study_areas: '',
+    digital_devices: [],
+    internet_reliability: '',
+    technical_support: '',
+    wheelchair_access: '',
+    learning_kits: '',
+    staff_count: '',
+    staff_gender_distribution: '',
+    male_students: '',
+    female_students: '',
+    extracurricular_activities: ''
   });
 
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 3;
 
   useEffect(() => {
+    const testSupabaseConnection = async () => {
+      try {
+        console.log('Testing Supabase connection...');
+        console.log('Supabase URL:', supabaseUrl);
+        console.log('API Key:', supabaseKey ? 'Set' : 'Not set');
+    
+        if (!supabaseUrl || !supabaseKey) {
+          throw new Error('Supabase URL or API Key is missing. Check your environment variables.');
+        }
+    
+        const { data, error } = await supabase.from(TABLE_NAME).select('*').limit(1);
+        
+        if (error) {
+          console.error('Supabase query error:', error);
+          if (error.code === '42P01') {
+            toast.error(`Table "${TABLE_NAME}" does not exist. Please check your table name.`);
+          } else if (error.code === '42501') {
+            toast.error('Permission denied. Check your API key permissions.');
+          } else {
+            toast.error(`Database error: ${error.message}`);
+          }
+        } else {
+          console.log('Supabase connection successful');
+          console.log('Data retrieved:', data);
+          toast.success('Successfully connected to the database.');
+        }
+      } catch (error) {
+        console.error('Error testing Supabase connection:', error);
+        toast.error(`Connection error: ${error.message}`);
+      }
+    };
+    testSupabaseConnection();
+
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        setFormData(prevState => ({
-          ...prevState,
-          latitude: position.coords.latitude.toFixed(6),
-          longitude: position.coords.longitude.toFixed(6)
-        }));
-      });
+      navigator.geolocation.getCurrentPosition(
+        function(position) {
+          setFormData(prevState => ({
+            ...prevState,
+            latitude: position.coords.latitude.toFixed(6),
+            longitude: position.coords.longitude.toFixed(6)
+          }));
+        },
+        function(error) {
+          console.error("Error getting geolocation:", error);
+          toast.error("Unable to get location. Please enter manually.");
+        }
+      );
+    } else {
+      console.log("Geolocation is not supported by this browser.");
+      toast.warn("Geolocation is not supported. Please enter location manually.");
     }
   }, []);
 
@@ -58,12 +108,35 @@ const OrganizationForm = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await axios.post('https://real-melons-shake.loca.lt/submit-form', formData);
-      console.log(response.data);
+      console.log('Submitting form data:', formData);
+      console.log('Supabase URL:', `${supabaseUrl}/rest/v1/${TABLE_NAME}`);
+
+      if (!supabaseUrl || !supabaseKey) {
+        throw new Error('Supabase URL or API Key is missing. Check your environment variables.');
+      }
+
+      // Convert digital_devices array to a string
+      const formDataToSubmit = {
+        ...formData,
+        digital_devices: formData.digital_devices.join(', '),
+        total_strength: parseInt(formData.total_strength, 10)
+      };
+
+      const { data, error } = await supabase
+        .from(TABLE_NAME)
+        .insert([formDataToSubmit]);
+
+      if (error) {
+        console.error('Supabase error:', error);
+        throw new Error(error.message || 'An error occurred while submitting the form');
+      }
+
+      console.log('Data inserted successfully:', data);
       toast.success('Form submitted successfully!');
+      // Reset form or navigate to a new page here if needed
     } catch (error) {
-      console.error('Error submitting form:', error);
-      toast.error('Error submitting form. Please try again.');
+      console.error('Error submitting form:', error.message);
+      toast.error(`Error submitting form: ${error.message}`);
     }
   };
 
@@ -150,12 +223,12 @@ const OrganizationForm = () => {
                 >
                   <h3 className="text-xl font-semibold text-gray-900">Basic Information</h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    {renderInputField("centreName", "What is the name of the centre?")}
-                    {renderInputField("centreLocation", "Where is the centre located?")}
+                    {renderInputField("centre_name", "What is the name of the centre?")}
+                    {renderInputField("centre_location", "Where is the centre located?")}
                     {renderInputField("latitude", "Latitude", "text", true)}
                     {renderInputField("longitude", "Longitude", "text", true)}
-                    {renderInputField("totalStrength", "How many people does the centre serve in total?", "number")}
-                    {renderSelectField("totalArea", "What is the total area of the centre?", [
+                    {renderInputField("total_strength", "How many people does the centre serve in total?", "number")}
+                    {renderSelectField("total_area", "What is the total area of the centre?", [
                       "Less than 500 sq. ft", "500 - 1000 sq. ft", "1000 - 2000 sq. ft", "More than 2000 sq. ft"
                     ])}
                   </div>
@@ -172,13 +245,13 @@ const OrganizationForm = () => {
                 >
                   <h3 className="text-xl font-semibold text-gray-900">Facilities</h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    {renderSelectField("educationalRooms", "How many rooms are designated for educational activities?", [
+                    {renderSelectField("educational_rooms", "How many rooms are designated for educational activities?", [
                       "1 - 2", "3 - 4", "More than 4"
                     ])}
-                    {renderSelectField("furnitureCondition", "What is the general condition of the furniture?", [
+                    {renderSelectField("furniture_condition", "What is the general condition of the furniture?", [
                       "Excellent", "Good", "Fair", "Poor"
                     ])}
-                    {renderSelectField("studyAreas", "Are there dedicated study areas for children?", [
+                    {renderSelectField("study_areas", "Are there dedicated study areas for children?", [
                       "Yes, separate rooms", "Yes, shared spaces", "No, they study in multipurpose areas", "Not applicable"
                     ])}
                     <div className="col-span-2">
@@ -186,13 +259,13 @@ const OrganizationForm = () => {
                         Which digital devices are available at the centre?*
                       </label>
                       <div className="grid grid-cols-2 gap-4">
-                        {['Tablets', 'Laptops', 'Desktop computers'].map((device) => (
+                        {['Tablets', 'Laptops', 'Desktop computers', 'Smart boards'].map((device) => (
                           <label key={device} className="inline-flex items-center">
                             <input
                               type="checkbox"
-                              name="digitalDevices"
+                              name="digital_devices"
                               value={device}
-                              checked={formData.digitalDevices.includes(device)}
+                              checked={formData.digital_devices.includes(device)}
                               onChange={handleChange}
                               className="form-checkbox h-5 w-5 text-indigo-600 transition duration-150 ease-in-out"
                             />
@@ -201,16 +274,16 @@ const OrganizationForm = () => {
                         ))}
                       </div>
                     </div>
-                    {renderSelectField("internetReliability", "How reliable is the internet connection?", [
+                    {renderSelectField("internet_reliability", "How reliable is the internet connection?", [
                       "Excellent", "Good", "Fair", "Poor"
                     ])}
-                    {renderSelectField("technicalSupport", "Is technical support available?", [
+                    {renderSelectField("technical_support", "Is technical support available?", [
                       "Yes, full-time", "Yes, part-time", "No, but support is available remotely", "No, there is no technical support"
                     ])}
-                    {renderSelectField("wheelchairAccess", "Is wheelchair access available?", [
+                    {renderSelectField("wheelchair_access", "Is wheelchair access available?", [
                       "Yes, fully accessible", "Yes, partially accessible", "No, but there are plans to improve", "No, not applicable"
                     ])}
-                    {renderSelectField("learningKits", "Are learning kits available?", [
+                    {renderSelectField("learning_kits", "Are learning kits available?", [
                       "Yes, comprehensive kits for all subjects", "Yes, but only for some subjects", "No, only basic materials are provided", "Not applicable"
                     ])}
                   </div>
@@ -227,26 +300,26 @@ const OrganizationForm = () => {
                 >
                   <h3 className="text-xl font-semibold text-gray-900">Staff and Students</h3>
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-                    {renderSelectField("staffCount", "How many staff members are there?", [
+                    {renderSelectField("staff_count", "How many staff members are there?", [
                       "1 - 5", "6 - 10", "11 - 15", "More than 15"
                     ])}
-                    {renderSelectField("staffGenderDistribution", "What is the gender distribution of the staff?", [
+                    {renderSelectField("staff_gender_distribution", "What is the gender distribution of the staff?", [
                       "Predominantly male", "Predominantly female", "Equal distribution", "Not applicable"
                     ])}
-                    {renderSelectField("maleStudents", "How many male students are there?", [
+                    {renderSelectField("male_students", "How many male students are there?", [
                       "Less than 5", "5 - 10", "11 - 15", "More than 15"
                     ])}
-                    {renderSelectField("femaleStudents", "How many female students are there?", [
+                    {renderSelectField("female_students", "How many female students are there?", [
                       "Less than 5", "5 - 10", "11 - 15", "More than 15"
                     ])}
-                    {renderSelectField("extracurricularActivities", "Are extracurricular activities offered?", [
+                    {renderSelectField("extracurricular_activities", "Are extracurricular activities offered?", [
                       "Yes, a wide range of activities", "Yes, a few activities", "No, but there are plans to introduce activities", "No, not applicable"
                     ])}
                   </div>
                 </motion.div>
               )}
 
-              <div className="flex justify-between pt-5">
+<div className="flex justify-between pt-5">
                 {currentStep > 1 && (
                   <button
                     type="button"
