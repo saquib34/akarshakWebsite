@@ -72,14 +72,13 @@ const MergedForm = () => {
     }
   };
 
-  const handleResponseCount = (questionId, optionValue, category, count) => {
+  const handleResponseCount = (questionId, optionValue, count) => {
     setAnswers(prev => ({
       ...prev,
       [questionId]: {
         ...prev[questionId],
         counts: {
-          ...prev[questionId]?.counts,
-          [category]: parseInt(count) || 0
+          students: parseInt(count) || 0
         }
       }
     }));
@@ -91,11 +90,8 @@ const MergedForm = () => {
       [questionId]: {
         ...prev[questionId],
         selectedAnswer: answerValue,
-        counts: prev[questionId]?.counts || {
-          students: 0,
-          teachers: 0,
-          parents: 0,
-          others: 0
+        counts: {
+          students: prev[questionId]?.counts?.students || 0
         }
       }
     }));
@@ -105,18 +101,47 @@ const MergedForm = () => {
     const newErrors = {};
     
     if (step === 1) {
-      if (!orgFormData.centre_name?.trim()) newErrors.centre_name = 'Required';
-      if (!orgFormData.centre_location?.trim()) newErrors.centre_location = 'Required';
-      if (!orgFormData.total_strength) newErrors.total_strength = 'Required';
-      if (!orgFormData.total_area) newErrors.total_area = 'Required';
-      if (!orgFormData.educational_rooms) newErrors.educational_rooms = 'Required';
-      if (!orgFormData.staff_count) newErrors.staff_count = 'Required';
+      const requiredFields = [
+        'centre_name',
+        'centre_location',
+        'total_strength',
+        'total_area',
+        'educational_rooms',
+        'furniture_condition',
+        'digital_devices',
+        'internet_reliability',
+        'staff_count',
+        'staff_gender_distribution',
+        'male_students',
+        'female_students'
+      ];
+
+      requiredFields.forEach(field => {
+        if (Array.isArray(orgFormData[field])) {
+          if (orgFormData[field].length === 0) {
+            newErrors[field] = `${field.replace(/_/g, ' ').toUpperCase()} is required`;
+          }
+        } else if (!orgFormData[field]?.toString().trim()) {
+          newErrors[field] = `${field.replace(/_/g, ' ').toUpperCase()} is required`;
+        }
+      });
+
+      if (Object.keys(newErrors).length > 0) {
+        toast.error('Please fill in all required fields', {
+          position: "top-center",
+          autoClose: 5000
+        });
+      }
     }
 
     if (step === 2) {
       const currentQ = `q${currentQuestion + 1}`;
       if (!answers[currentQ]?.selectedAnswer) {
-        newErrors[currentQ] = 'Please select an answer and provide response counts';
+        newErrors[currentQ] = 'Please select an answer and provide student response count';
+        toast.error('Please select an answer and provide student response count', {
+          position: "top-center",
+          autoClose: 5000
+        });
       }
     }
 
@@ -129,7 +154,6 @@ const MergedForm = () => {
     setSubmitAttempted(true);
 
     if (!validateStep(currentStep)) {
-      toast.error('Please complete all required fields');
       return;
     }
 
@@ -155,6 +179,7 @@ const MergedForm = () => {
       await getResponseStatistics(currentSet + 1, currentQuestion + 1);
       toast.success('Form submitted successfully!');
       
+      // Reset form
       setOrgFormData({
         centre_name: '',
         centre_location: '',
@@ -191,7 +216,7 @@ const MergedForm = () => {
   };
 
   const renderField = ({ name, label, type = "text", options = [], readOnly = false }) => {
-    const fieldError = submitAttempted ? errors[name] : null;
+    const fieldError = submitAttempted && errors[name];
     
     return (
       <div className="space-y-2">
@@ -301,281 +326,220 @@ const MergedForm = () => {
           <form onSubmit={handleSubmit} className="space-y-8">
             {currentStep === 1 ? (
               <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {renderField({
-                  name: "centre_name",
-                  label: "Centre Name"
-                })}
-                {renderField({
-                  name: "centre_location",
-                  label: "Centre Location"
-                })}
-                {renderField({
-                  name: "latitude",
-                  label: "Latitude",
-                  readOnly: true
-                })}
-                {renderField({
-                  name: "longitude",
-                  label: "Longitude",
-                  readOnly: true
-                })}
-                {renderField({
-                  name: "total_strength",
-                  label: "Total Capacity",
-                  type: "number"
-                })}
-                {renderField({
-                  name: "total_area",
-                  label: "Total Area",
-                  type: "select",
-                  options: [
-                    "Less than 500 sq. ft",
-                    "500 - 1000 sq. ft",
-                    "1000 - 2000 sq. ft",
-                    "More than 2000 sq. ft"
-                  ]
-                })}
-                {renderField({
-                  name: "digital_devices",
-                  label: "Available Digital Devices",
-                  type: "checkbox",
-                  options: ['Tablets', 'Laptops', 'Desktop computers', 'Smart boards']
-                })}
-                {renderField({
-                  name: "educational_rooms",
-                  label: "Number of Rooms",
-                  type: "select",
-                  options: ["1 - 2", "3 - 4", "More than 4"]
-                })}
-                {renderField({
-                  name: "furniture_condition",
-                  label: "Furniture Condition",
-                  type: "select",
-                  options: ["Excellent", "Good", "Fair", "Poor"]
-                })}
-                {renderField({
-                  name: "internet_reliability",
-                  label: "Internet Reliability",
-                  type: "select",
-                  options: ["Excellent", "Good", "Fair", "Poor"]
-                })}
-                {renderField({
-                  name: "staff_count",
-                  label: "Staff Count",
-                  type: "select",
-                  options: ["1 - 5", "6 - 10", "11 - 15", "More than 15"]
-                })}
-                {renderField({
-                  name: "staff_gender_distribution",
-                  label: "Staff Gender Distribution",
-                  type: "select",
-                  options: [
-                    "Predominantly male",
-                    "Predominantly female",
-                    "Equal distribution"
-                  ]
-                })}
-                {renderField({
-                  name: "male_students",
-                  label: "Male Students Count",
-                  type: "select",
-                  options: ["Less than 5", "5 - 10", "11 - 15", "More than 15"]
-                })}
-                {renderField({
-                  name: "female_students",
-                  label: "Female Students Count",
-                  type: "select",
-                  options: ["Less than 5", "5 - 10", "11 - 15", "More than 15"]
-                })}
-                {renderField({
-                  name: "centre_image",
-                  label: "Centre Image",
-                  type: "file"
-                })}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              className="space-y-6"
-            >
-              {showStory ? (
-                <div className="prose max-w-none">
-                  <h2 className="text-xl font-semibold mb-4">कहानी:</h2>
-                  <p className="whitespace-pre-wrap text-lg leading-relaxed">
-                    {storySets[currentSet].story}
-                  </p>
-
-                  <h3 className="text-xl font-semibold mt-6 mb-4">जीवन के पाठ:</h3>
-                  <div className="space-y-4">
-                    {storySets[currentSet].lifeLessons.map((lesson, index) => (
-                      <div key={index} className="bg-blue-50 p-4 rounded-lg">
-                        <h4 className="font-semibold text-blue-900">{lesson.title}</h4>
-                        <p className="text-blue-800">{lesson.description}</p>
-                      </div>
-                    ))}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowStory(false)}
-                    className="mt-8 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    प्रश्नों को देखें
-                  </button>
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {renderField({ name: "centre_name", label: "Centre Name" })}
+                  {renderField({ name: "centre_location", label: "Centre Location" })}
+                  {renderField({ name: "latitude", label: "Latitude", readOnly: true })}
+                  {renderField({ name: "longitude", label: "Longitude", readOnly: true })}
+                  {renderField({ name: "total_strength", label: "Total Capacity", type: "number" })}
+                  {renderField({
+                    name: "total_area",
+                    label: "Total Area",
+                    type: "select",
+                    options: ["Less than 500 sq. ft", "500 - 1000 sq. ft", "1000 - 2000 sq. ft", "More than 2000 sq. ft"]
+                  })}
+                  {renderField({
+                    name: "digital_devices",
+                    label: "Available Digital Devices",
+                    type: "checkbox",
+                    options: ['Tablets', 'Laptops', 'Desktop computers', 'Smart boards']
+                  })}
+                  {renderField({
+                    name: "educational_rooms",
+                    label: "Number of Rooms",
+                    type: "select",
+                    options: ["1 - 2", "3 - 4", "More than 4"]
+                  })}
+                  {renderField({
+                    name: "furniture_condition",
+                    label: "Furniture Condition",
+                    type: "select",
+                    options: ["Excellent", "Good", "Fair", "Poor"]
+                  })}
+                  {renderField({
+                    name: "internet_reliability",
+                    label: "Internet Reliability",
+                    type: "select",
+                    options: ["Excellent", "Good", "Fair", "Poor"]
+                  })}
+                  {renderField({
+                    name: "staff_count",
+                    label: "Staff Count",
+                    type: "select",
+                    options: ["1 - 5", "6 - 10", "11 - 15", "More than 15"]
+                  })}
+                  {renderField({
+                    name: "staff_gender_distribution",
+                    label: "Staff Gender Distribution",
+                    type: "select",
+                    options: ["Predominantly male", "Predominantly female", "Equal distribution"]
+                  })}
+                  {renderField({
+                    name: "male_students",
+                    label: "Male Students Count",
+                    type: "select",
+                    options: ["Less than 5", "5 - 10", "11 - 15", "More than 15"]
+                  })}
+                  {renderField({
+                    name: "female_students",
+                    label: "Female Students Count",
+                    type: "select",
+                    options: ["Less than 5", "5 - 10", "11 - 15", "More than 15"]
+                  })}
+                  {renderField({
+                    name: "centre_image",
+                    label: "Centre Image",
+                    type: "file"
+                  })}
                 </div>
-              ) : (
-                <div className="space-y-6">
-                  <div className="p-6 bg-white rounded-lg shadow-md">
-                    <p className="text-lg mb-6 font-medium">
-                      {storySets[currentSet].questions[currentQuestion].text}
+              </motion.div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                {showStory ? (
+                  <div className="prose max-w-none">
+                    <h2 className="text-xl font-semibold mb-4">कहानी:</h2>
+                    <p className="whitespace-pre-wrap text-lg leading-relaxed">
+                      {storySets[currentSet].story}
                     </p>
 
+                    <h3 className="text-xl font-semibold mt-6 mb-4">जीवन के पाठ:</h3>
                     <div className="space-y-4">
-                      {storySets[currentSet].questions[currentQuestion].options.map((option) => (
-                        <div key={option.value} className="space-y-2">
-                          <button
-                            type="button"
-                            onClick={() => handleAnswer(`q${currentQuestion + 1}`, option.value)}
-                            className={`w-full text-left p-4 rounded-lg border transition-colors
-                              ${answers[`q${currentQuestion + 1}`]?.selectedAnswer === option.value
-                                ? 'bg-blue-50 border-blue-500 text-blue-700'
-                                : 'hover:bg-gray-50 border-gray-200'}`}
-                          >
-                            {option.value}. {option.text}
-                          </button>
-
-                          {answers[`q${currentQuestion + 1}`]?.selectedAnswer === option.value && (
-                            <div className="grid grid-cols-2 gap-4 mt-2 p-4 bg-gray-50 rounded-lg">
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Students Response Count
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={answers[`q${currentQuestion + 1}`]?.counts?.students || ''}
-                                  onChange={(e) => handleResponseCount(`q${currentQuestion + 1}`, option.value, 'students', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Teachers Response Count
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={answers[`q${currentQuestion + 1}`]?.counts?.teachers || ''}
-                                  onChange={(e) => handleResponseCount(`q${currentQuestion + 1}`, option.value, 'teachers', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Parents Response Count
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={answers[`q${currentQuestion + 1}`]?.counts?.parents || ''}
-                                  onChange={(e) => handleResponseCount(`q${currentQuestion + 1}`, option.value, 'parents', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                />
-                              </div>
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                  Others Response Count
-                                </label>
-                                <input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={answers[`q${currentQuestion + 1}`]?.counts?.others || ''}
-                                  onChange={(e) => handleResponseCount(`q${currentQuestion + 1}`, option.value, 'others', e.target.value)}
-                                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                />
-                              </div>
-                            </div>
-                          )}
+                      {storySets[currentSet].lifeLessons.map((lesson, index) => (
+                        <div key={index} className="bg-blue-50 p-4 rounded-lg">
+                          <h4 className="font-semibold text-blue-900">{lesson.title}</h4>
+                          <p className="text-blue-800">{lesson.description}</p>
                         </div>
                       ))}
                     </div>
-                  </div>
 
-                  <div className="flex justify-between mt-6">
                     <button
                       type="button"
-                      onClick={() => currentQuestion > 0 && setCurrentQuestion(prev => prev - 1)}
-                      className="flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg
-                        hover:bg-gray-200 transition-colors"
-                      disabled={currentQuestion === 0}
+                      onClick={() => setShowStory(false)}
+                      className="mt-8 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
                     >
-                      <ChevronLeft className="w-5 h-5 mr-2" />
-                      Previous
+                      प्रश्नों को देखें
                     </button>
-                    
-                    {currentQuestion === storySets[currentSet].questions.length - 1 ? (
-                      <button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className={`flex items-center px-6 py-3 ${
-                          isSubmitting ? 'bg-blue-400' : 'bg-green-600 hover:bg-green-700'
-                        } text-white rounded-lg transition-colors`}
-                      >
-                        {isSubmitting ? 'Submitting...' : 'Submit All'}
-                      </button>
-                    ) : (
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="p-6 bg-white rounded-lg shadow-md">
+                      <p className="text-lg mb-6 font-medium">
+                        {storySets[currentSet].questions[currentQuestion].text}
+                      </p>
+
+                      <div className="space-y-4">
+                        {storySets[currentSet].questions[currentQuestion].options.map((option) => (
+                          <div key={option.value} className="space-y-2">
+                            <button
+                              type="button"
+                              onClick={() => handleAnswer(`q${currentQuestion + 1}`, option.value)}
+                              className={`w-full text-left p-4 rounded-lg border transition-colors
+                                ${answers[`q${currentQuestion + 1}`]?.selectedAnswer === option.value
+                                  ? 'bg-blue-50 border-blue-500 text-blue-700'
+                                  : 'hover:bg-gray-50 border-gray-200'}`}
+                            >
+                              {option.value}. {option.text}
+                            </button>
+
+                            {answers[`q${currentQuestion + 1}`]?.selectedAnswer === option.value && (
+                              <div className="mt-2 p-4 bg-gray-50 rounded-lg">
+                                <div>
+                                  <label className="block text-sm font-medium text-gray-700">
+                                    Student Response Count
+                                  </label>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={answers[`q${currentQuestion + 1}`]?.counts?.students || ''}
+                                    onChange={(e) => handleResponseCount(
+                                      `q${currentQuestion + 1}`,
+                                      option.value,
+                                      e.target.value
+                                    )}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm 
+                                      focus:border-blue-500 focus:ring-blue-500"
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between mt-6">
                       <button
                         type="button"
-                        onClick={() => setCurrentQuestion(prev => prev + 1)}
-                        className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg
-                          hover:bg-blue-700 transition-colors"
+                        onClick={() => currentQuestion > 0 && setCurrentQuestion(prev => prev - 1)}
+                        className="flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg
+                          hover:bg-gray-200 transition-colors"
+                        disabled={currentQuestion === 0}
                       >
-                        Next
-                        <ChevronRight className="w-5 h-5 ml-2" />
+                        <ChevronLeft className="w-5 h-5 mr-2" />
+                        Previous
                       </button>
-                    )}
+                      
+                      {currentQuestion === storySets[currentSet].questions.length - 1 ? (
+                        <button
+                          type="submit"
+                          disabled={isSubmitting}
+                          className={`flex items-center px-6 py-3 ${
+                            isSubmitting ? 'bg-blue-400' : 'bg-green-600 hover:bg-green-700'
+                          } text-white rounded-lg transition-colors`}
+                        >
+                          {isSubmitting ? 'Submitting...' : 'Submit All'}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setCurrentQuestion(prev => prev + 1)}
+                          className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg
+                            hover:bg-blue-700 transition-colors"
+                        >
+                          Next
+                          <ChevronRight className="w-5 h-5 ml-2" />
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </motion.div>
-          )}
+                )}
+              </motion.div>
+            )}
 
-          {currentStep === 1 && (
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => {
-                  if (validateStep(1)) {
-                    setCurrentStep(2);
-                  }
-                }}
-                className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg
-                  hover:bg-blue-700 transition-colors"
-              >
-                Next: Story Responses
-                <ChevronRight className="w-5 h-5 ml-2" />
-              </button>
-            </div>
-          )}
-        </form>
+            {currentStep === 1 && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (validateStep(1)) {
+                      setCurrentStep(2);
+                    }
+                  }}
+                  className="flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg
+                    hover:bg-blue-700 transition-colors"
+                >
+                  Next: Story Responses
+                  <ChevronRight className="w-5 h-5 ml-2" />
+                </button>
+              </div>
+            )}
+          </form>
+        </div>
       </div>
+      <ToastContainer />
     </div>
-    <ToastContainer />
-  </div>
-);
+  );
 };
 
 export default MergedForm;
