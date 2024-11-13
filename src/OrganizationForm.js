@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
+import { AlertCircle, ChevronLeft, ChevronRight, Upload } from 'lucide-react';
 import { Alert, AlertTitle, AlertDescription } from './alert';
 import { storySets } from './storySets';
 import { saveOrganization, saveStoryResponses, getResponseStatistics } from './db';
@@ -31,11 +31,10 @@ const MergedForm = () => {
     centre_image: null
   });
 
-  const [currentSet, setCurrentSet] = useState(0);
+  const [currentSet] = useState(0);
   const [showStory, setShowStory] = useState(true);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [responseStats, setResponseStats] = useState({});
   const [imagePreview, setImagePreview] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -153,9 +152,7 @@ const MergedForm = () => {
         ...answers
       });
 
-      const stats = await getResponseStatistics(currentSet + 1, currentQuestion + 1);
-      setResponseStats(stats);
-
+      await getResponseStatistics(currentSet + 1, currentQuestion + 1);
       toast.success('Form submitted successfully!');
       
       setOrgFormData({
