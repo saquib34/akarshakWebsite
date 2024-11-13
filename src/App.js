@@ -1,7 +1,8 @@
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
-import OrganizationForm from './OrganizationForm';
+import MergedForm from './OrganizationForm';
 // import testConnection from './test';
+import StoryForm from './storyForm';
 
 function Home() {
   return (
@@ -37,7 +38,8 @@ function App() {
         <header className="py-6">
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/form" element={<OrganizationForm />} />
+            <Route path="/form" element={<MergedForm />} />
+            {/* <Route path="/story" element={<StoryForm />} /> */}
           </Routes>
         </header>
       </div>
