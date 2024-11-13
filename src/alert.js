@@ -1,6 +1,6 @@
 import React from "react";
 import { cn } from "./utils";
-import { AlertCircle } from "lucide-react";
+// import { AlertCircle } from "lucide-react";
 
 const Alert = React.forwardRef(({ className, variant = "default", children, ...props }, ref) => {
   return (
