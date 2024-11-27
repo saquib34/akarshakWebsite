@@ -123,7 +123,7 @@ const MergedForm = () => {
       
       let hasAllAnswers = true;
       currentQuestionOptions.forEach(option => {
-        if (!answers[currentQ]?.[option.value]?.count) {
+        if (answers[currentQ]?.[option.value]?.count == null)  {
           hasAllAnswers = false;
         }
       });
