@@ -95,52 +95,51 @@ const MergedForm = () => {
   };
 
   const validateStep = (step) => {
-    const newErrors = {};
-    
-    if (step === 1) {
-      // Validate first step
-      if (!orgFormData.centre_name?.trim()) {
-        newErrors.centre_name = 'Centre name is required';
-      }
-      if (!orgFormData.centre_location?.trim()) {
-        newErrors.centre_location = 'Centre location is required';
-      }
-      if (!orgFormData.latitude || !orgFormData.longitude) {
-        newErrors.location = 'Location coordinates are required';
-      }
-      if (!orgFormData.total_strength) {
-        newErrors.total_strength = 'Total strength is required';
-      }
-      if (!orgFormData.centre_image) {
-        newErrors.centre_image = 'Centre image is required';
-      }
+  const newErrors = {};
+
+  if (step === 1) {
+    // Validate first step
+    if (!orgFormData.centre_name?.trim()) {
+      newErrors.centre_name = 'Centre name is required';
     }
+    if (!orgFormData.centre_location?.trim()) {
+      newErrors.centre_location = 'Centre location is required';
+    }
+    if (!orgFormData.latitude || !orgFormData.longitude) {
+      newErrors.location = 'Location coordinates are required';
+    }
+    if (!orgFormData.total_strength) {
+      newErrors.total_strength = 'Total strength is required';
+    }
+    if (!orgFormData.centre_image) {
+      newErrors.centre_image = 'Centre image is required';
+    }
+  }
 
-    if (step === 2) {
-      // Validate second step (responses)
-      const currentQ = `q${currentQuestion + 1}`;
-      const currentQuestionOptions = storySets[currentSet].questions[currentQuestion].options;
-      
-      let hasAllAnswers = true;
-      currentQuestionOptions.forEach(option => {
-        if (answers[currentQ]?.[option.value]?.count == null)  {
-          hasAllAnswers = false;
-        }
-      });
+  if (step === 2) {
+    // Validate second step (responses)
+    const currentQ = `q${currentQuestion + 1}`;
+    const currentQuestionOptions = storySets[currentSet].questions[currentQuestion].options;
 
-      if (!hasAllAnswers) {
-        newErrors[currentQ] = 'Please provide response count for all options';
+    let hasAllAnswers = true;
+    currentQuestionOptions.forEach(option => {
+      if (answers[currentQ]?.[option.value]?.count == null) {
+        hasAllAnswers = false;
       }
-    }
+    });
 
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) {
-      toast.error('Please fill in all required fields');
-      return false;
+    if (!hasAllAnswers) {
+      newErrors[currentQ] = 'Please provide response count for all options';
     }
-    return true;
-  };
+  }
 
+  setErrors(newErrors);
+  if (Object.keys(newErrors).length > 0) {
+    toast.error('Please fill in all required fields');
+    return false;
+  }
+  return true;
+};
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitAttempted(true);
