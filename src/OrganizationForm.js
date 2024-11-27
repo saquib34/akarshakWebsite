@@ -82,17 +82,17 @@ const MergedForm = () => {
   };
 
   const handleAnswer = (questionId, optionValue, count) => {
-    setAnswers(prev => ({
-      ...prev,
-      [questionId]: {
-        ...prev[questionId],
-        [optionValue]: {
-          selected: true,
-          count: parseInt(count) || 0
-        }
+  setAnswers(prev => ({
+    ...prev,
+    [questionId]: {
+      ...prev[questionId],
+      [optionValue]: {
+        selected: true,
+        count: count === '' ? 0 : parseInt(count)
       }
-    }));
-  };
+    }
+  }));
+};
 
   const validateStep = (step) => {
   const newErrors = {};
