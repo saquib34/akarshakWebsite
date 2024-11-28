@@ -402,11 +402,11 @@ const MergedForm = () => {
                                         min="0"
                                         placeholder="Students count"
                                         value={answers[`q${currentQuestion + 1}`]?.[option.value]?.count || ''}
-                                        onChange={(e) => handleAnswer(
-                                          `q${currentQuestion + 1}`,
-                                          option.value,
-                                          e.target.value
-                                        )}
+                                   value={answers[`q${currentQuestion + 1}`]?.[option.value]?.count ?? ''}
+  onChange={(e) => {
+    const value = e.target.value === "" ? 0 : parseInt(e.target.value, 10);
+    handleAnswer(`q${currentQuestion + 1}`, option.value, value);
+  }}
                                         className="w-32"
                                       />
                                     </div>
